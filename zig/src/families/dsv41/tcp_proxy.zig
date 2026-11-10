@@ -103,7 +103,11 @@ pub const Core = struct {
                     return k.fail(2);
                 }
                 if (idle_since == 0) idle_since = wire.monotonicNs();
-                if (wire.monotonicNs() - idle_since > 20 * std.time.ns_per_ms) std.Thread.yield() catch {} else std.atomic.spinLoopHint();
+                if (wire.monotonicNs() - idle_since > 20 * std.time.ns_per_ms) {
+                    // a real sleep: sched_yield keeps the thread runnable and burns a core while idle
+                    var ts: std.c.timespec = .{ .sec = 0, .nsec = 50 * std.time.ns_per_us };
+                    _ = std.c.nanosleep(&ts, null);
+                } else std.atomic.spinLoopHint();
                 continue;
             }
             idle_since = 0;
@@ -235,7 +239,11 @@ pub const Second = struct {
                     return s.fail(2);
                 }
                 if (idle_since == 0) idle_since = wire.monotonicNs();
-                if (wire.monotonicNs() - idle_since > 20 * std.time.ns_per_ms) std.Thread.yield() catch {} else std.atomic.spinLoopHint();
+                if (wire.monotonicNs() - idle_since > 20 * std.time.ns_per_ms) {
+                    // a real sleep: sched_yield keeps the thread runnable and burns a core while idle
+                    var ts: std.c.timespec = .{ .sec = 0, .nsec = 50 * std.time.ns_per_us };
+                    _ = std.c.nanosleep(&ts, null);
+                } else std.atomic.spinLoopHint();
                 continue;
             }
             idle_since = 0;
